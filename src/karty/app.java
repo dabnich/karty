@@ -3,10 +3,12 @@ package karty;
 import java.applet.Applet;
 import java.awt.*;
 import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.util.Random;
+import java.awt.event.MouseMotionListener;
 
-public class app extends Applet implements Runnable, KeyListener{
+public class app extends Applet implements Runnable, MouseListener, MouseMotionListener{
 	
 	Thread thread;
 	boolean pracuje;
@@ -14,15 +16,27 @@ public class app extends Applet implements Runnable, KeyListener{
 	int szerokosc=4;
 	int dlugosc=4;
 	int pola[][] = new int[szerokosc][dlugosc];
-	boolean zakryte[][] = new boolean[szerokosc][dlugosc];
+	boolean odkryte[][] = new boolean[szerokosc][dlugosc];
+	int nWcisniete = 0;
+	int[][] wcisniete = new int[2][2];
+	int [] pol = new int[2];
+	
+	int pozX=0;
+	int pozY=0;
+	int odstep = 15;
+	int szer = 50;
+	int dlug = 50;
+	
+	int mouseX, mouseY;
 	
 	
 	public void init(){
 		pracuje = false;
-		addKeyListener(this);
+		addMouseListener(this);
+		addMouseMotionListener(this);
 		resize(Constants.szerokoscOkna, Constants.wysokoscOkna);
 		Gr = getGraphics();
-		pola = generujPlansze(4, 4);
+		pola = generujPlansze(szerokosc, dlugosc);
 	}
 	
 	public void start(){
@@ -39,7 +53,8 @@ public class app extends Applet implements Runnable, KeyListener{
 		while(pracuje){
 			
 			Gr.clearRect(0, 0, getWidth(), getHeight());
-			rysujPlansze(pola, zakryte);
+			rysujPlansze(pola, odkryte);
+			if(czyWpolu(mouseX, mouseY)) Gr.drawString("wPolu", 350, 450);
 			
 			try{
 				Thread.sleep(1000/Constants.FPS);
@@ -51,11 +66,7 @@ public class app extends Applet implements Runnable, KeyListener{
 	
 	
 	public void rysujPlansze(int[][] plansza, boolean[][] zakryte){
-		int pozX=0;
-		int pozY=0;
-		int odstep = 15;
-		int szer = 50;
-		int dlug = 50;
+		Gr.drawString(Integer.toString(mouseX), 400, 400);
 		for(int x=0; x<plansza.length; x++){
 			pozX = odstep*(x+1)+x*szer;
 			for(int y=0; y<plansza[0].length; y++){
@@ -104,16 +115,61 @@ public class app extends Applet implements Runnable, KeyListener{
 		return true;
 	}
 	
-	public void keyPressed(KeyEvent evt){
+	public void mouseClicked(MouseEvent evt){
 		
 	}
 	
-	public void keyTyped(KeyEvent evt){
+	public void mouseEntered(MouseEvent evt){
 		
 	}
 	
-	public void keyReleased(KeyEvent evt){
+	public void mousePressed(MouseEvent evt){
+		int mouseX = evt.getX();
+		int mouseY = evt.getY();
+		if(czyWpolu(mouseX, mouseY)){
+			pol = poleMysz(mouseX, mouseY);
+		}
+	}
+
+	public void mouseExited(MouseEvent evt){
 		
 	}
 
+	public void mouseReleased(MouseEvent evt){
+
+	}
+	
+	public void mouseDragged(MouseEvent evt){
+		mouseX = evt.getX();
+		mouseY = evt.getY();
+	}
+	
+	public void mouseMoved(MouseEvent evt){
+		mouseX = evt.getX();
+		mouseY = evt.getY();
+	}
+	
+	
+	public boolean czyWpolu(int mouseX, int mouseY){
+		if(mouseX<odstep || mouseY<odstep) return false;
+		
+		int wsp = (mouseX-odstep)/(szer+odstep);
+		int start = wsp*(szer+odstep)+odstep;
+		int koniec = start+szer;
+		if(mouseX>=start && mouseX<koniec){ 
+			wsp = (mouseY-odstep)/(dlug+odstep);
+			start = wsp*(dlug+odstep)+odstep;
+			koniec = start+dlug;
+			if(mouseY>=start && mouseY<koniec) return true;
+			else return false;
+		}
+		else return false;
+	}
+	
+	public int[] poleMysz(int mouseX, int mouseY){
+		int x = (mouseX-odstep)/(szer+odstep);
+		int y = (mouseY-odstep)/(dlug+odstep);
+		return new int[] {x,y};
+	}
 }
+
