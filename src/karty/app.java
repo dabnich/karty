@@ -2,11 +2,11 @@ package karty;
 
 import java.applet.Applet;
 import java.awt.*;
-import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.Random;
 import java.awt.event.MouseMotionListener;
+import java.util.Date;
 
 public class app extends Applet implements Runnable, MouseListener, MouseMotionListener{
 	
@@ -30,6 +30,8 @@ public class app extends Applet implements Runnable, MouseListener, MouseMotionL
 	int mouseX, mouseY;
 	boolean click=false;
 	
+	Date data;
+	int startTime, currTime;
 	
 	public void init(){
 		pracuje = false;
@@ -38,6 +40,8 @@ public class app extends Applet implements Runnable, MouseListener, MouseMotionL
 		resize(Constants.szerokoscOkna, Constants.wysokoscOkna);
 		Gr = getGraphics();
 		pola = generujPlansze(szerokosc, dlugosc);
+		data = new Date();
+		startTime = (int)(data.getTime()/1000);
 	}
 	
 	public void start(){
@@ -54,6 +58,7 @@ public class app extends Applet implements Runnable, MouseListener, MouseMotionL
 		rysujPlansze(pola, odkryte);
 		while(pracuje){
 			if(click){
+				click=false;
 				if(czyWpolu(mouseX, mouseY)){
 					wcisniete[nWcisniete] = poleMysz(mouseX, mouseY);
 					if(!czyOdkryte(wcisniete[nWcisniete][0], wcisniete[nWcisniete][1])){
@@ -62,24 +67,27 @@ public class app extends Applet implements Runnable, MouseListener, MouseMotionL
 						if(!sprawdzWcisniete()){
 							rysujPlansze(pola, odkryte);
 							resetujWcisniete();
+							data = new Date();
+							startTime = (int)(data.getTime()/1000);
 							try{
-								Thread.sleep(1000);
-								Gr.clearRect(0, 0, getWidth(), getHeight());
-								rysujPlansze(pola, odkryte);
+								Thread.sleep(750);
 							}
 							catch(InterruptedException exc){};
-							
+
+							Gr.clearRect(0, 0, getWidth(), getHeight());
+							rysujPlansze(pola, odkryte);
 						}
-						else rysujPlansze(pola, odkryte);
+						else{ 
+							rysujPlansze(pola, odkryte);
+							if(sprawdzWygrana(odkryte)){
+								Gr.drawString("wygrana", 450, 550);
+								break;
+							}
+								
+						}
 					}
 				}
 			}
-			click=false;
-			try{
-				Thread.sleep(25);
-			}
-			catch(InterruptedException exc){};
-
 		}
 	}
 	
@@ -98,6 +106,7 @@ public class app extends Applet implements Runnable, MouseListener, MouseMotionL
 			}
 		}
 		Gr.drawString(Integer.toString(nWcisniete), 400, 400);
+		
 	}
 	
 	
@@ -215,6 +224,15 @@ public class app extends Applet implements Runnable, MouseListener, MouseMotionL
 		int x = (mouseX-odstep)/(szer+odstep);
 		int y = (mouseY-odstep)/(dlug+odstep);
 		return new int[] {x,y};
+	}
+	
+	public boolean sprawdzWygrana(boolean[][] odkryte){
+		for(int x=0; x<odkryte.length; x++){
+			for(int y=0; y<odkryte[0].length; y++){
+				if(odkryte[x][y]==false) return false;
+			}
+		}
+		return true;
 	}
 }
 
