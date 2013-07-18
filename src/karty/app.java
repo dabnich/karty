@@ -18,8 +18,8 @@ public class app extends Applet implements Runnable, MouseListener, MouseMotionL
 	int pola[][] = new int[szerokosc][dlugosc];
 	boolean odkryte[][] = new boolean[szerokosc][dlugosc];
 	int nWcisniete = 0;
-	int[][] wcisniete = new int[2][2];
-	int [] pol = new int[2];
+	int[][] wcisniete = new int[3][2];
+	
 	
 	int pozX=0;
 	int pozY=0;
@@ -28,6 +28,7 @@ public class app extends Applet implements Runnable, MouseListener, MouseMotionL
 	int dlug = 50;
 	
 	int mouseX, mouseY;
+	boolean click=false;
 	
 	
 	public void init(){
@@ -50,32 +51,53 @@ public class app extends Applet implements Runnable, MouseListener, MouseMotionL
 	}
 	
 	public void run(){
+		rysujPlansze(pola, odkryte);
 		while(pracuje){
-			
-			Gr.clearRect(0, 0, getWidth(), getHeight());
-			rysujPlansze(pola, odkryte);
-			if(czyWpolu(mouseX, mouseY)) Gr.drawString("wPolu", 350, 450);
-			
-			try{
-				Thread.sleep(1000/Constants.FPS);
+			if(click){
+				if(czyWpolu(mouseX, mouseY)){
+					wcisniete[nWcisniete] = poleMysz(mouseX, mouseY);
+					if(!czyOdkryte(wcisniete[nWcisniete][0], wcisniete[nWcisniete][1])){
+						nWcisniete++;
+						Gr.clearRect(0, 0, getWidth(), getHeight());
+						if(!sprawdzWcisniete()){
+							rysujPlansze(pola, odkryte);
+							resetujWcisniete();
+							try{
+								Thread.sleep(1000);
+								Gr.clearRect(0, 0, getWidth(), getHeight());
+								rysujPlansze(pola, odkryte);
+							}
+							catch(InterruptedException exc){};
+							
+						}
+						else rysujPlansze(pola, odkryte);
+					}
+				}
 			}
-			catch(InterruptedException ex){}
+			click=false;
+			try{
+				Thread.sleep(25);
+			}
+			catch(InterruptedException exc){};
+
 		}
 	}
 	
 	
 	
-	public void rysujPlansze(int[][] plansza, boolean[][] zakryte){
-		Gr.drawString(Integer.toString(mouseX), 400, 400);
+	public void rysujPlansze(int[][] plansza, boolean[][] odkryte){
+		Gr.setFont(new Font("Arial", 30, 25));
 		for(int x=0; x<plansza.length; x++){
 			pozX = odstep*(x+1)+x*szer;
 			for(int y=0; y<plansza[0].length; y++){
 				pozY = odstep*(y+1)+y*dlug;
 				Gr.drawRect(pozX, pozY, szer, dlug);
-				Gr.setFont(new Font("Arial", 30, 25));
-				Gr.drawString(Integer.toString(plansza[x][y]), pozX + szer/2, pozY + dlug/2);
+				if(odkryte[x][y]==true){
+					Gr.drawString(Integer.toString(plansza[x][y]), pozX + szer/2, pozY + dlug/2);
+				}
 			}
 		}
+		Gr.drawString(Integer.toString(nWcisniete), 400, 400);
 	}
 	
 	
@@ -115,8 +137,36 @@ public class app extends Applet implements Runnable, MouseListener, MouseMotionL
 		return true;
 	}
 	
+	public boolean sprawdzWcisniete(){
+		if(nWcisniete==1){
+			odkryte[wcisniete[0][0]][wcisniete[0][1]]=true;
+			return true;
+		}
+		if(nWcisniete==2){
+			odkryte[wcisniete[0][0]][wcisniete[0][1]]=true;
+			odkryte[wcisniete[1][0]][wcisniete[1][1]]=true;
+			nWcisniete=0;
+			if(pola[wcisniete[0][0]][wcisniete[0][1]]==pola[wcisniete[1][0]][wcisniete[1][1]]){
+				return true;
+			}
+			else return false;
+		}
+		return true;
+	}
+	
+	public boolean czyOdkryte(int x, int y){
+		if(odkryte[x][y]) return true;
+		return false;
+	}
+	
+	public void resetujWcisniete(){
+		odkryte[wcisniete[0][0]][wcisniete[0][1]]=false;
+		odkryte[wcisniete[1][0]][wcisniete[1][1]]=false;
+	}
 	public void mouseClicked(MouseEvent evt){
-		
+		mouseX = evt.getX();
+		mouseY = evt.getY();
+		click = true;
 	}
 	
 	public void mouseEntered(MouseEvent evt){
@@ -124,11 +174,8 @@ public class app extends Applet implements Runnable, MouseListener, MouseMotionL
 	}
 	
 	public void mousePressed(MouseEvent evt){
-		int mouseX = evt.getX();
-		int mouseY = evt.getY();
-		if(czyWpolu(mouseX, mouseY)){
-			pol = poleMysz(mouseX, mouseY);
-		}
+
+
 	}
 
 	public void mouseExited(MouseEvent evt){
@@ -140,13 +187,11 @@ public class app extends Applet implements Runnable, MouseListener, MouseMotionL
 	}
 	
 	public void mouseDragged(MouseEvent evt){
-		mouseX = evt.getX();
-		mouseY = evt.getY();
+
 	}
 	
 	public void mouseMoved(MouseEvent evt){
-		mouseX = evt.getX();
-		mouseY = evt.getY();
+
 	}
 	
 	
