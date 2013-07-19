@@ -13,12 +13,14 @@ public class app extends Applet implements Runnable, MouseListener, MouseMotionL
 	Thread thread;
 	boolean pracuje;
 	Graphics Gr;
+	Graphics Gn;
 	int szerokosc=4;
 	int dlugosc=4;
 	int pola[][] = new int[szerokosc][dlugosc];
 	boolean odkryte[][] = new boolean[szerokosc][dlugosc];
 	int nWcisniete = 0;
 	int[][] wcisniete = new int[3][2];
+	int ileOdkryc=0;
 	
 	
 	int pozX=0;
@@ -31,7 +33,8 @@ public class app extends Applet implements Runnable, MouseListener, MouseMotionL
 	boolean click=false;
 	
 	Date data;
-	int startTime, currTime;
+	long startTime; 
+	double currTime;
 	
 	public void init(){
 		pracuje = false;
@@ -39,9 +42,11 @@ public class app extends Applet implements Runnable, MouseListener, MouseMotionL
 		addMouseMotionListener(this);
 		resize(Constants.szerokoscOkna, Constants.wysokoscOkna);
 		Gr = getGraphics();
+		Gn = getGraphics();
 		pola = generujPlansze(szerokosc, dlugosc);
 		data = new Date();
-		startTime = (int)(data.getTime()/1000);
+		startTime = data.getTime();
+		ileOdkryc=0;
 	}
 	
 	public void start(){
@@ -57,19 +62,22 @@ public class app extends Applet implements Runnable, MouseListener, MouseMotionL
 	public void run(){
 		rysujPlansze(pola, odkryte);
 		while(pracuje){
+
 			if(click){
 				click=false;
 				if(czyWpolu(mouseX, mouseY)){
 					wcisniete[nWcisniete] = poleMysz(mouseX, mouseY);
 					if(!czyOdkryte(wcisniete[nWcisniete][0], wcisniete[nWcisniete][1])){
 						nWcisniete++;
+						ileOdkryc++;
 						Gr.clearRect(0, 0, getWidth(), getHeight());
 						if(!sprawdzWcisniete()){
 							rysujPlansze(pola, odkryte);
 							resetujWcisniete();
-							data = new Date();
-							startTime = (int)(data.getTime()/1000);
+							Gn.drawString(String.format("%.1f", currTime),500, 500);
+							Gn.drawString(Integer.toString(ileOdkryc),550, 500);
 							try{
+								
 								Thread.sleep(750);
 							}
 							catch(InterruptedException exc){};
@@ -80,14 +88,35 @@ public class app extends Applet implements Runnable, MouseListener, MouseMotionL
 						else{ 
 							rysujPlansze(pola, odkryte);
 							if(sprawdzWygrana(odkryte)){
+								Gn.clearRect(400, 400, 1000, 1000);
 								Gr.drawString("wygrana", 450, 550);
-								break;
+								Gn.drawString(String.format("%.1f", currTime),500, 500);
+								Gn.drawString(Integer.toString(ileOdkryc),550, 500);
+								pracuje=false;
 							}
 								
 						}
 					}
 				}
 			}
+			if(ileOdkryc<1){
+				currTime = 0;
+			}
+			else{
+				if(ileOdkryc==1){
+					data = new Date();
+					startTime = data.getTime();
+				}
+				data = new Date();
+				currTime = (double)(data.getTime()-startTime)/1000;
+			}
+			Gn.clearRect(400, 400, 1000, 1000);
+			Gn.drawString(String.format("%.1f", currTime),500, 500);
+			Gn.drawString(Integer.toString(ileOdkryc),550, 500);
+			try{
+				Thread.sleep(20);
+			}
+			catch(InterruptedException exc){};
 		}
 	}
 	
