@@ -2,6 +2,8 @@ package karty;
 
 import java.applet.Applet;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.Random;
@@ -36,13 +38,41 @@ public class app extends Applet implements Runnable, MouseListener, MouseMotionL
 	long startTime; 
 	double currTime;
 	
+	String nick;
+	baza baza;
+	
+	Panel panel = new Panel();
+	TextField input = new TextField(20);
+	TextArea textDane = new TextArea();
+	Button button = new Button("Zatwierdü");
+	
 	public void init(){
 		pracuje = false;
+		baza = new baza();
+		baza.stworzTabele();
+		
 		addMouseListener(this);
 		addMouseMotionListener(this);
 		resize(Constants.szerokoscOkna, Constants.wysokoscOkna);
 		Gr = getGraphics();
 		Gn = getGraphics();
+		
+		setLayout(new BorderLayout());
+		
+		textDane.setText(baza.pobierzWynikiString(10));
+
+		button.addActionListener(new ActionListener(){
+			public void actionPerformed(ActionEvent e){
+				nick = input.getText();
+				textDane.setText(nick);
+			}
+		});
+		
+		panel.add(input);
+		panel.add(button);
+		panel.add(textDane);
+		add(panel, BorderLayout.SOUTH);
+		
 		pola = generujPlansze(szerokosc, dlugosc);
 		data = new Date();
 		startTime = data.getTime();
@@ -77,8 +107,7 @@ public class app extends Applet implements Runnable, MouseListener, MouseMotionL
 							Gn.drawString(String.format("%.1f", currTime),500, 500);
 							Gn.drawString(Integer.toString(ileOdkryc),550, 500);
 							try{
-								
-								Thread.sleep(750);
+								Thread.sleep(Constants.czasOdslony);
 							}
 							catch(InterruptedException exc){};
 
@@ -92,6 +121,7 @@ public class app extends Applet implements Runnable, MouseListener, MouseMotionL
 								Gr.drawString("wygrana", 450, 550);
 								Gn.drawString(String.format("%.1f", currTime),500, 500);
 								Gn.drawString(Integer.toString(ileOdkryc),550, 500);
+								baza.zapiszRekord(input.getText(), ileOdkryc, currTime, szerokosc*dlugosc);
 								pracuje=false;
 							}
 								
@@ -124,6 +154,7 @@ public class app extends Applet implements Runnable, MouseListener, MouseMotionL
 	
 	public void rysujPlansze(int[][] plansza, boolean[][] odkryte){
 		Gr.setFont(new Font("Arial", 30, 25));
+		
 		for(int x=0; x<plansza.length; x++){
 			pozX = odstep*(x+1)+x*szer;
 			for(int y=0; y<plansza[0].length; y++){
