@@ -26,6 +26,9 @@ public class app extends Applet implements Runnable, MouseListener, MouseMotionL
 
 	int mouseX, mouseY;
 	boolean click=false;
+	
+	boolean nickOk;
+	String nick;
 
 	
 	Panel panel = new Panel();
@@ -36,6 +39,8 @@ public class app extends Applet implements Runnable, MouseListener, MouseMotionL
 	
 	public void init(){
 		pracuje = false;
+		nickOk = false;
+		nick = "gosc";
 		
 		plansza = new plansza(szerokosc, dlugosc, 50, 50);
 		baza = new baza();
@@ -50,19 +55,23 @@ public class app extends Applet implements Runnable, MouseListener, MouseMotionL
 		
 		setLayout(new BorderLayout());
 		
-		
 		textDane.setText(baza.pobierzWynikiString(10));
+		textDane.setEditable(false);
 
 		button.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e){
-				//nick = input.getText();
-				//textDane.setText(nick);
+				nickOk=true;
+				nick = input.getText();
+				rysujPlansze();
+				panel.remove(button);
+				panel.remove(input);
 			}
+			
 		});
 		
+		panel.add(textDane);
 		panel.add(input);
 		panel.add(button);
-		panel.add(textDane);
 		add(panel, BorderLayout.SOUTH);
 	}
 	
@@ -77,53 +86,50 @@ public class app extends Applet implements Runnable, MouseListener, MouseMotionL
 	}
 	
 	public void run(){
-		rysujPlansze();
+		//rysujPlansze();
 		while(pracuje){
-
-			if(click){
-				click=false;
-				
-				if(plansza.czyWpolu(mouseX, mouseY)){
-					if(!status.aktywny) status.wystartuj();
-					plansza.odkryjMysz(mouseX, mouseY);
-					if(!plansza.czyOdkryte()){
-						plansza.nWcisniete++;
-						status.dodajOdkrycie();
-						Gr.clearRect(0, 0, getWidth(), getHeight());
-						if(!plansza.sprawdzWcisniete()){
-							rysujPlansze();
-							plansza.resetujWcisniete();
-							rysujStatus();
-							try{
-								Thread.sleep(Constants.czasOdslony);
-							}
-							catch(InterruptedException exc){};
-
+			if(nickOk){
+				if(click){
+					click=false;
+					
+					if(plansza.czyWpolu(mouseX, mouseY)){
+						if(!status.aktywny) status.wystartuj();
+						plansza.odkryjMysz(mouseX, mouseY);
+						if(!plansza.czyOdkryte()){
+							plansza.nWcisniete++;
+							status.dodajOdkrycie();
 							Gr.clearRect(0, 0, getWidth(), getHeight());
-							rysujPlansze();
-						}
-						else{ 
-							rysujPlansze();
-							if(sprawdzWygrana(plansza.odkryte)){
-								Gn.clearRect(400, 400, 1000, 1000);
-								Gr.drawString("wygrana", 450, 550);
-								Gn.drawString(String.format("%.1f", status.podajCzas()),500, 200);
-								Gn.drawString(Integer.toString(status.odkrycia),550, 500);
-								baza.zapiszRekord(input.getText(), status.odkrycia, status.podajCzas(), plansza.iloscPol);
-								//init();
-								//Gr.clearRect(0, 0, getWidth(), getHeight());
+							if(!plansza.sprawdzWcisniete()){
+								rysujPlansze();
+								plansza.resetujWcisniete();
+								rysujStatus();
+								try{
+									Thread.sleep(Constants.czasOdslony);
+								}
+								catch(InterruptedException exc){};
+	
+								Gr.clearRect(0, 0, getWidth(), getHeight());
+								rysujPlansze();
 							}
-								
+							else{ 
+								if(sprawdzWygrana(plansza.odkryte)){
+									baza.zapiszRekord(nick, status.odkrycia, status.podajCzas(), plansza.iloscPol);
+									Gr.clearRect(0, 0, getWidth(), getHeight());
+									init();
+								}
+								else rysujPlansze();
+									
+							}
 						}
 					}
 				}
+	
+				rysujStatus();
+				try{
+					Thread.sleep(20);
+				}
+				catch(InterruptedException exc){};
 			}
-
-			rysujStatus();
-			try{
-				Thread.sleep(20);
-			}
-			catch(InterruptedException exc){};
 		}
 	}
 	
