@@ -10,6 +10,10 @@ import java.util.Random;
 import java.awt.event.MouseMotionListener;
 import java.util.Date;
 
+import javax.swing.GroupLayout;
+import javax.swing.ImageIcon;
+import javax.swing.JTextArea;
+
 public class app extends Applet implements Runnable, MouseListener, MouseMotionListener{
 	
 	Thread thread;
@@ -34,18 +38,21 @@ public class app extends Applet implements Runnable, MouseListener, MouseMotionL
 	Panel panel = new Panel();
 	TextField input = new TextField(20);
 	TextArea textDane = new TextArea();
-	//Label textDane = new Label();
-	Button button = new Button("Zatwierdü");
+	
+	Button buttonNick = new Button("Zatwierdü");
+	Button buttonRestart = new Button("Nowa gra");
+	Label label = new Label("Podaj swÛj Nick: ");
 	
 	public void init(){
 		pracuje = false;
 		nickOk = false;
 		nick = "gosc";
 		
-		plansza = new plansza(szerokosc, dlugosc, 50, 50);
+		plansza = new plansza(szerokosc, dlugosc, 120, 100);
+		status = new status();
 		baza = new baza();
 		baza.stworzTabele();
-		status = new status();
+		
 		
 		addMouseListener(this);
 		addMouseMotionListener(this);
@@ -54,25 +61,37 @@ public class app extends Applet implements Runnable, MouseListener, MouseMotionL
 		Gn = getGraphics();
 		
 		setLayout(new BorderLayout());
-		
+		panel.setBackground(new Color(200,150,150));
 		textDane.setText(baza.pobierzWynikiString(10));
 		textDane.setEditable(false);
 
-		button.addActionListener(new ActionListener(){
+		buttonNick.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e){
 				nickOk=true;
 				nick = input.getText();
 				rysujPlansze();
-				panel.remove(button);
-				panel.remove(input);
+	
+				panel.removeAll();
+				textDane.setVisible(true);
+				panel.add(textDane);
+				panel.add(buttonRestart, FlowLayout.LEFT);
+				panel.setVisible(true);
 			}
 			
 		});
 		
+		buttonRestart.addActionListener(new ActionListener(){
+			public void actionPerformed(ActionEvent e){
+				resetujGre();
+			}
+		});
+		
 		panel.add(textDane);
+		panel.add(label);
 		panel.add(input);
-		panel.add(button);
+		panel.add(buttonNick);
 		add(panel, BorderLayout.SOUTH);
+		panel.add(buttonRestart, FlowLayout.LEFT);
 	}
 	
 	public void start(){
@@ -114,8 +133,7 @@ public class app extends Applet implements Runnable, MouseListener, MouseMotionL
 							else{ 
 								if(sprawdzWygrana(plansza.odkryte)){
 									baza.zapiszRekord(nick, status.odkrycia, status.podajCzas(), plansza.iloscPol);
-									Gr.clearRect(0, 0, getWidth(), getHeight());
-									init();
+									rysujStatus();
 								}
 								else rysujPlansze();
 									
@@ -134,7 +152,7 @@ public class app extends Applet implements Runnable, MouseListener, MouseMotionL
 	}
 	
 	
-	
+	/*
 	public void rysujPlansze(){
 		int pozX, pozY;
 		Gr.setFont(new Font("Arial", 30, 25));
@@ -145,6 +163,24 @@ public class app extends Applet implements Runnable, MouseListener, MouseMotionL
 				Gr.drawRect(pozX, pozY, plansza.karta.szerokosc, plansza.karta.dlugosc);
 				if(plansza.odkryte[x][y]==true){
 					Gr.drawString(Integer.toString(plansza.pole[x][y]), pozX + plansza.karta.szerokosc/2, pozY + plansza.karta.dlugosc/2);
+				}
+			}
+		}
+	}
+	*/
+	public void rysujPlansze(){
+		int pozX, pozY;
+		Image img;
+		Gr.setFont(new Font("Arial", 30, 25));
+		for(int x=0; x<plansza.pole.length; x++){
+			pozX = plansza.karta.odstep*(x+1)+x*plansza.karta.szerokosc;
+			for(int y=0; y<plansza.pole[0].length; y++){
+				pozY = plansza.karta.odstep*(y+1)+y*plansza.karta.dlugosc;
+				img = new ImageIcon("r.gif").getImage();
+				Gr.drawImage(img, pozX, pozY, plansza.karta.szerokosc, plansza.karta.dlugosc, null);
+				if(plansza.odkryte[x][y]==true){
+					img = new ImageIcon(Integer.toString(plansza.pole[x][y])+".JPG").getImage();
+					Gr.drawImage(img, pozX, pozY, plansza.karta.szerokosc, plansza.karta.dlugosc, null);
 				}
 			}
 		}
@@ -191,7 +227,22 @@ public class app extends Applet implements Runnable, MouseListener, MouseMotionL
 
 	}
 	
-
+	public void resetujGre(){
+		Gr.clearRect(0, 0, getWidth(), getHeight());
+		plansza = new plansza(szerokosc, dlugosc, 50, 50);
+		status = new status();
+		textDane.setText(baza.pobierzWynikiString(10));
+		panel.removeAll();
+		panel.add(buttonRestart);
+		panel.add(textDane);
+		if(!nickOk){
+			panel.add(label);
+			panel.add(input);
+			panel.add(buttonNick);
+		}
+		add(panel, BorderLayout.SOUTH);
+		panel.setVisible(true);
+	}
 	
 	public boolean sprawdzWygrana(boolean[][] odkryte){
 		for(int x=0; x<odkryte.length; x++){

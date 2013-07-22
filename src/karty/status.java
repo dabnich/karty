@@ -19,12 +19,21 @@ public class status {
 		startCzas = data.getTime();
 		aktywny=true;
 	}
+	
+	public void stopuj(){
+		aktywny=false;
+		czas = podajCzas();
+	}
 
 	public double podajCzas(){
-		if(!aktywny) return 0;
+		if(!aktywny){
+			if(startCzas==0) return 0;
+			else return czas;
+		}
 		data = new Date();
 		long aktCzas = data.getTime();
 		long roznica = aktCzas - startCzas;
+		czas = roznica/1000;
 		return (double) roznica/1000;
 	}
 	
