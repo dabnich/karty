@@ -18,38 +18,29 @@ public class app extends Applet implements Runnable, MouseListener, MouseMotionL
 	Graphics Gn;
 	int szerokosc=4;
 	int dlugosc=4;
-	int pola[][] = new int[szerokosc][dlugosc];
-	boolean odkryte[][] = new boolean[szerokosc][dlugosc];
-	int nWcisniete = 0;
-	int[][] wcisniete = new int[3][2];
-	int ileOdkryc=0;
+
 	
-	
-	int pozX=0;
-	int pozY=0;
-	int odstep = 15;
-	int szer = 50;
-	int dlug = 50;
-	
+	plansza plansza;
+	baza baza;
+	status status;
+
 	int mouseX, mouseY;
 	boolean click=false;
-	
-	Date data;
-	long startTime; 
-	double currTime;
-	
-	String nick;
-	baza baza;
+
 	
 	Panel panel = new Panel();
 	TextField input = new TextField(20);
 	TextArea textDane = new TextArea();
+	//Label textDane = new Label();
 	Button button = new Button("Zatwierdü");
 	
 	public void init(){
 		pracuje = false;
+		
+		plansza = new plansza(szerokosc, dlugosc, 50, 50);
 		baza = new baza();
 		baza.stworzTabele();
+		status = new status();
 		
 		addMouseListener(this);
 		addMouseMotionListener(this);
@@ -59,12 +50,13 @@ public class app extends Applet implements Runnable, MouseListener, MouseMotionL
 		
 		setLayout(new BorderLayout());
 		
+		
 		textDane.setText(baza.pobierzWynikiString(10));
 
 		button.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e){
-				nick = input.getText();
-				textDane.setText(nick);
+				//nick = input.getText();
+				//textDane.setText(nick);
 			}
 		});
 		
@@ -72,11 +64,6 @@ public class app extends Applet implements Runnable, MouseListener, MouseMotionL
 		panel.add(button);
 		panel.add(textDane);
 		add(panel, BorderLayout.SOUTH);
-		
-		pola = generujPlansze(szerokosc, dlugosc);
-		data = new Date();
-		startTime = data.getTime();
-		ileOdkryc=0;
 	}
 	
 	public void start(){
@@ -90,59 +77,49 @@ public class app extends Applet implements Runnable, MouseListener, MouseMotionL
 	}
 	
 	public void run(){
-		rysujPlansze(pola, odkryte);
+		rysujPlansze();
 		while(pracuje){
 
 			if(click){
 				click=false;
-				if(czyWpolu(mouseX, mouseY)){
-					wcisniete[nWcisniete] = poleMysz(mouseX, mouseY);
-					if(!czyOdkryte(wcisniete[nWcisniete][0], wcisniete[nWcisniete][1])){
-						nWcisniete++;
-						ileOdkryc++;
+				
+				if(plansza.czyWpolu(mouseX, mouseY)){
+					if(!status.aktywny) status.wystartuj();
+					plansza.odkryjMysz(mouseX, mouseY);
+					if(!plansza.czyOdkryte()){
+						plansza.nWcisniete++;
+						status.dodajOdkrycie();
 						Gr.clearRect(0, 0, getWidth(), getHeight());
-						if(!sprawdzWcisniete()){
-							rysujPlansze(pola, odkryte);
-							resetujWcisniete();
-							Gn.drawString(String.format("%.1f", currTime),500, 500);
-							Gn.drawString(Integer.toString(ileOdkryc),550, 500);
+						if(!plansza.sprawdzWcisniete()){
+							rysujPlansze();
+							plansza.resetujWcisniete();
+							rysujStatus();
 							try{
 								Thread.sleep(Constants.czasOdslony);
 							}
 							catch(InterruptedException exc){};
 
 							Gr.clearRect(0, 0, getWidth(), getHeight());
-							rysujPlansze(pola, odkryte);
+							rysujPlansze();
 						}
 						else{ 
-							rysujPlansze(pola, odkryte);
-							if(sprawdzWygrana(odkryte)){
+							rysujPlansze();
+							if(sprawdzWygrana(plansza.odkryte)){
 								Gn.clearRect(400, 400, 1000, 1000);
 								Gr.drawString("wygrana", 450, 550);
-								Gn.drawString(String.format("%.1f", currTime),500, 500);
-								Gn.drawString(Integer.toString(ileOdkryc),550, 500);
-								baza.zapiszRekord(input.getText(), ileOdkryc, currTime, szerokosc*dlugosc);
-								pracuje=false;
+								Gn.drawString(String.format("%.1f", status.podajCzas()),500, 200);
+								Gn.drawString(Integer.toString(status.odkrycia),550, 500);
+								baza.zapiszRekord(input.getText(), status.odkrycia, status.podajCzas(), plansza.iloscPol);
+								//init();
+								//Gr.clearRect(0, 0, getWidth(), getHeight());
 							}
 								
 						}
 					}
 				}
 			}
-			if(ileOdkryc<1){
-				currTime = 0;
-			}
-			else{
-				if(ileOdkryc==1){
-					data = new Date();
-					startTime = data.getTime();
-				}
-				data = new Date();
-				currTime = (double)(data.getTime()-startTime)/1000;
-			}
-			Gn.clearRect(400, 400, 1000, 1000);
-			Gn.drawString(String.format("%.1f", currTime),500, 500);
-			Gn.drawString(Integer.toString(ileOdkryc),550, 500);
+
+			rysujStatus();
 			try{
 				Thread.sleep(20);
 			}
@@ -152,90 +129,33 @@ public class app extends Applet implements Runnable, MouseListener, MouseMotionL
 	
 	
 	
-	public void rysujPlansze(int[][] plansza, boolean[][] odkryte){
+	public void rysujPlansze(){
+		int pozX, pozY;
 		Gr.setFont(new Font("Arial", 30, 25));
-		
-		for(int x=0; x<plansza.length; x++){
-			pozX = odstep*(x+1)+x*szer;
-			for(int y=0; y<plansza[0].length; y++){
-				pozY = odstep*(y+1)+y*dlug;
-				Gr.drawRect(pozX, pozY, szer, dlug);
-				if(odkryte[x][y]==true){
-					Gr.drawString(Integer.toString(plansza[x][y]), pozX + szer/2, pozY + dlug/2);
+		for(int x=0; x<plansza.pole.length; x++){
+			pozX = plansza.karta.odstep*(x+1)+x*plansza.karta.szerokosc;
+			for(int y=0; y<plansza.pole[0].length; y++){
+				pozY = plansza.karta.odstep*(y+1)+y*plansza.karta.dlugosc;
+				Gr.drawRect(pozX, pozY, plansza.karta.szerokosc, plansza.karta.dlugosc);
+				if(plansza.odkryte[x][y]==true){
+					Gr.drawString(Integer.toString(plansza.pole[x][y]), pozX + plansza.karta.szerokosc/2, pozY + plansza.karta.dlugosc/2);
 				}
 			}
 		}
-		Gr.drawString(Integer.toString(nWcisniete), 400, 400);
-		
 	}
 	
+	public void rysujStatus(){
+		int pozX = (plansza.karta.szerokosc+plansza.karta.odstep)*plansza.szerokosc+100;
+		Gn.clearRect(pozX, 0, 200, 300);
+		Gn.drawString("Odkrycia: "+Integer.toString(status.odkrycia), pozX, 50);
+		Gn.drawString("Czas: "+String.format("%.1f", status.podajCzas()), pozX, 100);
+	}
 	
-	public int[][] generujPlansze(int szerokosc, int dlugosc){
-		Random rand;
-		int los;
-		int iloscKart = szerokosc*dlugosc/2;
-		int iloscPol = szerokosc*dlugosc;
-		int[] tab = new int[iloscPol];
-		int[][] pola = new int[szerokosc][dlugosc];
-		int x, y;
-		for(int i=0; i<iloscPol; i++){
-			y = (int)(i/szerokosc);
-			x = i - y*szerokosc;
-			rand = new Random();
-			los = rand.nextInt(iloscKart);
-			while(!sprawdzLos(los, tab,i)){
-				rand = new Random();
-				los = rand.nextInt(iloscKart);
-			}
-			tab[i] = los;
-			pola[x][y] = los;
-		}
-		return pola;
 
-	}
 	
-	boolean sprawdzLos(int los, int tab[], int n){
-		if(n<2) return true;
-		int ilosc=0;
-		for(int i=0; i<n; i++){
-			if(tab[i]==los){
-				ilosc++;
-				if(ilosc>=2) return false;
-			}
-		}
-		return true;
-	}
-	
-	public boolean sprawdzWcisniete(){
-		if(nWcisniete==1){
-			odkryte[wcisniete[0][0]][wcisniete[0][1]]=true;
-			return true;
-		}
-		if(nWcisniete==2){
-			odkryte[wcisniete[0][0]][wcisniete[0][1]]=true;
-			odkryte[wcisniete[1][0]][wcisniete[1][1]]=true;
-			nWcisniete=0;
-			if(pola[wcisniete[0][0]][wcisniete[0][1]]==pola[wcisniete[1][0]][wcisniete[1][1]]){
-				return true;
-			}
-			else return false;
-		}
-		return true;
-	}
-	
-	public boolean czyOdkryte(int x, int y){
-		if(odkryte[x][y]) return true;
-		return false;
-	}
-	
-	public void resetujWcisniete(){
-		odkryte[wcisniete[0][0]][wcisniete[0][1]]=false;
-		odkryte[wcisniete[1][0]][wcisniete[1][1]]=false;
-	}
+
 	public void mouseClicked(MouseEvent evt){
-		mouseX = evt.getX();
-		mouseY = evt.getY();
-		click = true;
+
 	}
 	
 	public void mouseEntered(MouseEvent evt){
@@ -243,7 +163,9 @@ public class app extends Applet implements Runnable, MouseListener, MouseMotionL
 	}
 	
 	public void mousePressed(MouseEvent evt){
-
+		mouseX = evt.getX();
+		mouseY = evt.getY();
+		click = true;
 
 	}
 
@@ -263,28 +185,7 @@ public class app extends Applet implements Runnable, MouseListener, MouseMotionL
 
 	}
 	
-	
-	public boolean czyWpolu(int mouseX, int mouseY){
-		if(mouseX<odstep || mouseY<odstep) return false;
-		
-		int wsp = (mouseX-odstep)/(szer+odstep);
-		int start = wsp*(szer+odstep)+odstep;
-		int koniec = start+szer;
-		if(mouseX>=start && mouseX<koniec){ 
-			wsp = (mouseY-odstep)/(dlug+odstep);
-			start = wsp*(dlug+odstep)+odstep;
-			koniec = start+dlug;
-			if(mouseY>=start && mouseY<koniec) return true;
-			else return false;
-		}
-		else return false;
-	}
-	
-	public int[] poleMysz(int mouseX, int mouseY){
-		int x = (mouseX-odstep)/(szer+odstep);
-		int y = (mouseY-odstep)/(dlug+odstep);
-		return new int[] {x,y};
-	}
+
 	
 	public boolean sprawdzWygrana(boolean[][] odkryte){
 		for(int x=0; x<odkryte.length; x++){
