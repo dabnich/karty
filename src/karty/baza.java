@@ -2,6 +2,7 @@ package karty;
 
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.Date;
 
 import org.sqlite.*;
 
@@ -57,9 +58,9 @@ public class baza {
 	public void zapiszRekord(String nick, int odkrycia, double czasTrwania, int iloscPol){
 		int wynik = obliczWynik(odkrycia, czasTrwania, iloscPol);
 		String query = 
-			"INSERT INTO wyniki (nick, odkrycia, czasTrwania, wynik, iloscPol) "
+			"INSERT INTO wyniki (nick, odkrycia, czasTrwania, wynik, iloscPol, zarejestrowano) "
 			+"VALUES"
-			+"('"+nick+"', "+odkrycia+", "+czasTrwania+", "+wynik+", "+iloscPol+")";
+			+"('"+nick+"', "+odkrycia+", "+czasTrwania+", "+wynik+", "+iloscPol+", '"+new Date().toLocaleString()+"')";
 		
 		try{
 			stat = conn.createStatement();
@@ -71,26 +72,6 @@ public class baza {
 		}
 	}
 	
-	public void wyswietlWyniki(){
-		String query = "SELECT nick, odkrycia, czasTrwania, wynik, iloscPol, zarejestrowano FROM wyniki";
-		ResultSet result = null;
-		try{
-			stat = conn.createStatement();
-			result = stat.executeQuery(query);
-			while(result.next()){
-				System.out.print(result.getString("nick")+"\n");
-				System.out.print(result.getString("odkrycia")+"\n");
-				System.out.print(result.getString("czasTrwania")+"\n");
-				System.out.print(result.getString("wynik")+"\n");
-				System.out.print(result.getString("iloscPol")+"\n");
-				System.out.print(result.getString("zarejestrowano")+"\n");
-			}
-		}
-		catch(Exception e){
-			System.err.print(e.getMessage());
-			//return false;
-		}
-	}
 	
 	public ArrayList<ArrayList<String>> pobierzWyniki(int maxIlosc){
 		String query = "SELECT nick, odkrycia, czasTrwania, wynik, iloscPol, zarejestrowano FROM wyniki ORDER BY wynik DESC LIMIT "+maxIlosc;
@@ -102,14 +83,14 @@ public class baza {
 			result = stat.executeQuery(query);
 
 			while(result.next()){
-				wynik.add(0, result.getString("nick"));
-				wynik.add(1, result.getString("wynik"));
-				wynik.add(2, result.getString("odkrycia"));
-				wynik.add(3, result.getString("czasTrwania"));
-				wynik.add(4, result.getString("zarejestrowano"));
+				wynik.add(result.getString("nick"));
+				wynik.add(result.getString("wynik"));
+				wynik.add(result.getString("odkrycia"));
+				wynik.add(result.getString("czasTrwania"));
+				wynik.add(result.getString("zarejestrowano"));
 				wyniki.add(wynik);
 				
-				wynik.clear();
+				wynik = new ArrayList<String>();
 				//System.out.print(result.getString("iloscPol")+"\n");
 			}
 			

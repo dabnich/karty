@@ -2,6 +2,7 @@ package karty;
 
 import java.util.Date;
 
+
 public class status {
 	
 	double czas;
@@ -21,7 +22,7 @@ public class status {
 	}
 	
 	public void stopuj(){
-		aktywny=false;
+		aktywny = false;
 		czas = podajCzas();
 	}
 
@@ -31,6 +32,7 @@ public class status {
 			else return czas;
 		}
 		data = new Date();
+		
 		long aktCzas = data.getTime();
 		long roznica = aktCzas - startCzas;
 		czas = roznica/1000;

@@ -119,7 +119,7 @@ public class plansza {
 	
 	public boolean czyWpolu(int mouseX, int mouseY){
 		if(	mouseX<karta.odstep || mouseY<karta.odstep || 
-			mouseX>(karta.odstep+karta.szerokosc)*szerokosc || mouseY>(karta.odstep+karta.szerokosc)*dlugosc
+			mouseX>(karta.odstep+karta.szerokosc)*szerokosc || mouseY>(karta.odstep+karta.dlugosc)*dlugosc
 			) 
 			return false;
 		
